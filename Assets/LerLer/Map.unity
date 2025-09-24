@@ -300,6 +300,8 @@ MonoBehaviour:
   height: 6
   cellSize: 1.5
   cellPrefab: {fileID: 1537844193724479943, guid: 9d849c33559c1b14c8ce45d7ec7d1657, type: 3}
+  enemyBasePrefab: {fileID: 8566624553361115724, guid: 980b86e72eb80b84190dfeb64b09ff69, type: 3}
+  mainBasePrefab: {fileID: 8954802101298102702, guid: 79568c980407ce14fbfa0d9ca96c002d, type: 3}
 --- !u!4 &616155262
 Transform:
   m_ObjectHideFlags: 0

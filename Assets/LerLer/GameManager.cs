@@ -7,7 +7,6 @@ public class GameManager : MonoBehaviour
     public int health = 10;
     public int waves = 0;
 
-
     [Header("References")]
     public Map map;
     public Camera mainCamera;
@@ -23,11 +22,10 @@ public class GameManager : MonoBehaviour
 
         if (Input.GetMouseButtonDown(0))
         {
-            PlaceUnit(MouseLoc, 0);
+            PlaceWall(MouseLoc, 0);
         }
     }
 
-    // Enemy เข้ามาฐาน
     public void EnemyEntered(int damage)
     {
         health -= damage;
@@ -37,20 +35,24 @@ public class GameManager : MonoBehaviour
         }
     }
 
-    public void PlaceUnit(Vector2 pos, int wallIndex)
+    public void PlaceWall(Vector2 pos, int wallIndex)
     {
         if (wallIndex < 0 || wallIndex >= wallPrefabs.Length) return;
 
         GameObject prefab = wallPrefabs[wallIndex];
         Wall wall = prefab.GetComponent<Wall>();
         if (wall == null) return;
+        if (!map.IsInsideMap(pos))
+        {
+            Debug.Log("Invalid position: outside map!");
+            return;
+        }
 
         if (currency >= wall.cost)
         {
             Vector2 snappedPos = map.GetPosition(pos);
             GameObject unit = Instantiate(prefab, snappedPos, Quaternion.identity);
-            unit.transform.localScale = new Vector3(map.cellSize, map.cellSize, 1); 
-
+            unit.transform.localScale = new Vector3(map.cellSize, map.cellSize, 1);
             currency -= wall.cost;
         }
         else
@@ -74,7 +76,6 @@ public class GameManager : MonoBehaviour
     {
         Vector3 mouseScreen = Input.mousePosition;
         mouseScreen.z = -mainCamera.transform.position.z;
-
         Vector3 mouseWorld = mainCamera.ScreenToWorldPoint(mouseScreen);
         MouseLoc = new Vector2(mouseWorld.x, mouseWorld.y);
     }
