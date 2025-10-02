@@ -3,16 +3,16 @@ using UnityEngine;
 public class GameManager : MonoBehaviour
 {
     [Header("Game Stats")]
-    public int currency = 100;
-    public int health = 10;
-    public int waves = 0;
+    public int Currency = 100;
+    public int Health = 10;
+    public int Waves = 0;
 
     [Header("References")]
-    public Map map;
-    public Camera mainCamera;
+    public Map Map;
+    public Camera MainCamera;
 
     [Header("Units")]
-    public GameObject[] wallPrefabs; 
+    public GameObject[] WallPrefabs; 
 
     public Vector2 MouseLoc { get; private set; }
 
@@ -28,8 +28,8 @@ public class GameManager : MonoBehaviour
 
     public void EnemyEntered(int damage)
     {
-        health -= damage;
-        if (health <= 0)
+        Health -= damage;
+        if (Health <= 0)
         {
             Debug.Log("Game Over!");
         }
@@ -37,23 +37,23 @@ public class GameManager : MonoBehaviour
 
     public void PlaceWall(Vector2 pos, int wallIndex)
     {
-        if (wallIndex < 0 || wallIndex >= wallPrefabs.Length) return;
+        if (wallIndex < 0 || wallIndex >= WallPrefabs.Length) return;
 
-        GameObject prefab = wallPrefabs[wallIndex];
+        GameObject prefab = WallPrefabs[wallIndex];
         Wall wall = prefab.GetComponent<Wall>();
         if (wall == null) return;
-        if (!map.IsInsideMap(pos))
+        if (!Map.IsInsideMap(pos))
         {
             Debug.Log("Invalid position: outside map!");
             return;
         }
 
-        if (currency >= wall.cost)
+        if (Currency >= wall.Cost)
         {
-            Vector2 snappedPos = map.GetPosition(pos);
+            Vector2 snappedPos = Map.GetPosition(pos);
             GameObject unit = Instantiate(prefab, snappedPos, Quaternion.identity);
-            unit.transform.localScale = new Vector3(map.cellSize, map.cellSize, 1);
-            currency -= wall.cost;
+            unit.transform.localScale = new Vector3(Map.cellSize, Map.cellSize, 1);
+            Currency -= wall.Cost;
         }
         else
         {
@@ -63,20 +63,20 @@ public class GameManager : MonoBehaviour
 
     public void Wave()
     {
-        waves++;
-        Debug.Log("Starting wave: " + waves);
+        Waves++;
+        Debug.Log("Starting wave: " + Waves);
     }
 
     private void Paycheck(int income)
     {
-        currency += income;
+        Currency += income;
     }
 
     private void TrackMouse()
     {
         Vector3 mouseScreen = Input.mousePosition;
-        mouseScreen.z = -mainCamera.transform.position.z;
-        Vector3 mouseWorld = mainCamera.ScreenToWorldPoint(mouseScreen);
+        mouseScreen.z = -MainCamera.transform.position.z;
+        Vector3 mouseWorld = MainCamera.ScreenToWorldPoint(mouseScreen);
         MouseLoc = new Vector2(mouseWorld.x, mouseWorld.y);
     }
 }

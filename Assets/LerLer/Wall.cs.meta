@@ -3,7 +3,11 @@ guid: e88bb7f441cf4504688b1ce191a47471
 MonoImporter:
   externalObjects: {}
   serializedVersion: 2
-  defaultReferences: []
+  defaultReferences:
+  - wallmodel: {fileID: 5999516541507185840, guid: bdc95d5c103c4dc419076ca8333df734, type: 3}
+  - switchmodel: {fileID: 5999516541507185840, guid: fd147af538b717c419d5a053bec79982, type: 3}
+  - disguisemodel: {fileID: 5999516541507185840, guid: b7c941b4cc418cf4188c92e0f9234cc2, type: 3}
+  - lasermodel: {fileID: 5999516541507185840, guid: 90a556d4250b790478c352139b3a6922, type: 3}
   executionOrder: 0
   icon: {instanceID: 0}
   userData: 
