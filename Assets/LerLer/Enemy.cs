@@ -54,14 +54,12 @@ public class Enemy : MonoBehaviour
             moveTimer = 0f;
         }
 
-        // Smoothly move to target position
         transform.position = Vector3.MoveTowards(
             transform.position,
             targetPos,
             MoveSpeed * Time.deltaTime
         );
 
-        // Optional: rotate to face move direction
         Vector3 dir = targetPos - transform.position;
         if (dir.sqrMagnitude > 0.01f)
         {
@@ -79,14 +77,12 @@ public class Enemy : MonoBehaviour
         Vector3 target = SnapToGrid(new Vector3(
             mainBaseTransform.position.x,
             mainBaseTransform.position.y,
-            transform.position.z // keep Z constant
+            transform.position.z
         ));
 
-        // Already close to base
         if (Vector3.Distance(current, target) < 0.1f)
             return;
 
-        // 4-directional movement on X–Y plane
         Vector3[] directions =
         {
             new Vector3(gridSize, 0, 0),
@@ -103,7 +99,6 @@ public class Enemy : MonoBehaviour
             Vector3 possibleMove = current + dir;
             float distanceToBase = Vector3.Distance(possibleMove, target);
 
-            // Avoid stronger walls
             if (IsBlockedByStrongWall(possibleMove))
                 continue;
 
@@ -116,12 +111,11 @@ public class Enemy : MonoBehaviour
 
         if (bestMove != current)
         {
-            // If wall in front (weaker or equal), attack instead of move
             if (CheckForWall(bestMove))
                 return;
 
             targetPos = bestMove;
-            targetPos.z = transform.position.z; // keep on same plane
+            targetPos.z = transform.position.z;
         }
     }
 

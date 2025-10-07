@@ -51,31 +51,26 @@ public class GameManager : MonoBehaviour
         Wall wallData = prefab.GetComponent<Wall>();
         if (wallData == null) return;
 
-        // snap position to grid
         Vector2 snappedPos = map.GetPosition(pos);
 
-        // check map bounds
         if (!map.IsInsideMap(snappedPos))
         {
             Debug.Log("Invalid position: outside map!");
             return;
         }
 
-        // prevent placement on base
         if (snappedPos == map.MainBasePos || snappedPos == map.EnemyBasePos)
         {
             Debug.Log("Cannot place wall on base!");
             return;
         }
 
-        // prevent placement on occupied cell
         if (occupiedCells.Contains(snappedPos))
         {
             Debug.Log("Cell already occupied!");
             return;
         }
 
-        // check currency
         if (Currency >= wallData.Cost)
         {
             GameObject unit = Instantiate(prefab, snappedPos, Quaternion.identity, map.transform);
@@ -114,8 +109,6 @@ public class GameManager : MonoBehaviour
     {
         Waves++;
         Debug.Log("Starting wave: " + Waves);
-
-        // spawn one enemy at enemy base for now
         SpawnEnemy(map.EnemyBasePos);
     }
 
