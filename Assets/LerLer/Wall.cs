@@ -5,9 +5,13 @@ public class Wall : MonoBehaviour
 {
     private GameManager gamemanager;
     public int Cost = 20;
+
     private int UpgradeCost = 25;
     protected int Health = 50;
+
     public int Level = 1;
+
+    public int CurrentHealth => Health;
 
     public virtual void OnDamaged(int damage)
     {
@@ -20,29 +24,29 @@ public class Wall : MonoBehaviour
 
     public virtual void Upgraded()
     {
-        if (gamemanager.Currency >= UpgradeCost && Level > 5)
+        if (gamemanager.Currency >= UpgradeCost && Level < 5) 
         {
             gamemanager.Currency -= UpgradeCost;
             Level++;
             Health *= 2;
             UpgradeCost *= 2;
         }
-
-        else if (gamemanager.Currency >= UpgradeCost)
-        {
-            Debug.Log($"Need {gamemanager.Currency}$ more");
-        }
-
-        else
+        else if (Level >= 5)
         {
             Debug.Log("Max Level");
         }
+        else
+        {
+            int needMore = UpgradeCost - gamemanager.Currency;
+            Debug.Log($"Need {needMore}$ more");
+        }
     }
+
     void Update()
     {
         if (Level == 5)
-            {
-                WallChoose.Instance.ShowUpgrade(this);
-            }
+        {
+            WallChoose.Instance.ShowUpgrade(this);
+        }
     }
 }

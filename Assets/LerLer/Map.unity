@@ -387,11 +387,12 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   Currency: 100
   Health: 10
-  Waves: 0
-  Map: {fileID: 616155261}
-  MainCamera: {fileID: 1548208813}
-  WallPrefabs:
+  Waves: 1
+  map: {fileID: 616155261}
+  mainCamera: {fileID: 1548208813}
+  wallPrefabs:
   - {fileID: 5999516541507185840, guid: bdc95d5c103c4dc419076ca8333df734, type: 3}
+  enemyPrefab: {fileID: 8349942157368600015, guid: 6f2d77ce8af5d66498c187b0f3a170d9, type: 3}
 --- !u!4 &148134016
 Transform:
   m_ObjectHideFlags: 0

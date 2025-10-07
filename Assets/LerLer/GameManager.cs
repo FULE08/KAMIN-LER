@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 
 public class GameManager : MonoBehaviour
@@ -8,13 +9,20 @@ public class GameManager : MonoBehaviour
     public int Waves = 0;
 
     [Header("References")]
-    public Map Map;
-    public Camera MainCamera;
+    public Map map;                 
+    public Camera mainCamera;       
 
     [Header("Units")]
-    public GameObject[] WallPrefabs; 
+    public GameObject[] wallPrefabs;
+    public GameObject enemyPrefab;
 
     public Vector2 MouseLoc { get; private set; }
+    private HashSet<Vector2> occupiedCells = new HashSet<Vector2>();
+
+    void Start()
+    {
+        Wave(); 
+    }
 
     void Update()
     {
@@ -37,23 +45,44 @@ public class GameManager : MonoBehaviour
 
     public void PlaceWall(Vector2 pos, int wallIndex)
     {
-        if (wallIndex < 0 || wallIndex >= WallPrefabs.Length) return;
+        if (wallIndex < 0 || wallIndex >= wallPrefabs.Length) return;
 
-        GameObject prefab = WallPrefabs[wallIndex];
-        Wall wall = prefab.GetComponent<Wall>();
-        if (wall == null) return;
-        if (!Map.IsInsideMap(pos))
+        GameObject prefab = wallPrefabs[wallIndex];
+        Wall wallData = prefab.GetComponent<Wall>();
+        if (wallData == null) return;
+
+        // snap position to grid
+        Vector2 snappedPos = map.GetPosition(pos);
+
+        // check map bounds
+        if (!map.IsInsideMap(snappedPos))
         {
             Debug.Log("Invalid position: outside map!");
             return;
         }
 
-        if (Currency >= wall.Cost)
+        // prevent placement on base
+        if (snappedPos == map.MainBasePos || snappedPos == map.EnemyBasePos)
         {
-            Vector2 snappedPos = Map.GetPosition(pos);
-            GameObject unit = Instantiate(prefab, snappedPos, Quaternion.identity);
-            unit.transform.localScale = new Vector3(Map.cellSize, Map.cellSize, 1);
-            Currency -= wall.Cost;
+            Debug.Log("Cannot place wall on base!");
+            return;
+        }
+
+        // prevent placement on occupied cell
+        if (occupiedCells.Contains(snappedPos))
+        {
+            Debug.Log("Cell already occupied!");
+            return;
+        }
+
+        // check currency
+        if (Currency >= wallData.Cost)
+        {
+            GameObject unit = Instantiate(prefab, snappedPos, Quaternion.identity, map.transform);
+            unit.transform.localScale = new Vector3(map.cellSize, map.cellSize, 1);
+            Currency -= wallData.Cost;
+
+            occupiedCells.Add(snappedPos); // mark cell occupied
         }
         else
         {
@@ -61,10 +90,33 @@ public class GameManager : MonoBehaviour
         }
     }
 
+
+    public void SpawnEnemy(Vector2 position)
+    {
+        if (enemyPrefab == null)
+        {
+            Debug.LogWarning("Enemy prefab not assigned.");
+            return;
+        }
+
+        GameObject enemyObj = Instantiate(enemyPrefab, position, Quaternion.identity, transform);
+        enemyObj.transform.localScale = new Vector3(map.cellSize, map.cellSize, 1);
+
+        Enemy enemy = enemyObj.GetComponent<Enemy>();
+        if (enemy != null)
+        {
+            enemy.MoveSpeed = 2f;
+            enemy.Damage = 10;
+        }
+    }
+
     public void Wave()
     {
         Waves++;
         Debug.Log("Starting wave: " + Waves);
+
+        // spawn one enemy at enemy base for now
+        SpawnEnemy(map.EnemyBasePos);
     }
 
     private void Paycheck(int income)
@@ -75,8 +127,8 @@ public class GameManager : MonoBehaviour
     private void TrackMouse()
     {
         Vector3 mouseScreen = Input.mousePosition;
-        mouseScreen.z = -MainCamera.transform.position.z;
-        Vector3 mouseWorld = MainCamera.ScreenToWorldPoint(mouseScreen);
+        mouseScreen.z = -mainCamera.transform.position.z;
+        Vector3 mouseWorld = mainCamera.ScreenToWorldPoint(mouseScreen);
         MouseLoc = new Vector2(mouseWorld.x, mouseWorld.y);
     }
 }
