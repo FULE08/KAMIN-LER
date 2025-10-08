@@ -8,7 +8,7 @@ public class Wall : MonoBehaviour
     protected TextMeshProUGUI TextLabel;
     public int Cost = 20;
 
-    protected int UpgradeCost = 25;
+    public int UpgradeCost = 25;
     protected int Health = 50;
     protected int MaxLevel = 5;
     public int Level = 1;

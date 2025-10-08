@@ -387,11 +387,20 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   Currency: 100
   Health: 10
-  Waves: 1
+  Waves: 0
+  totalWaves: 10
+  baseEnemiesPerWave: 1
+  enemyIncreasePerWave: 2
+  timeBetweenEnemySpawns: 1
+  timeBetweenWaves: 5
+  baseIncome: 50
+  incomeMultiplier: 2
   map: {fileID: 616155261}
   mainCamera: {fileID: 1548208813}
   wallPrefabs:
   - {fileID: 5999516541507185840, guid: bdc95d5c103c4dc419076ca8333df734, type: 3}
+  unitPrefabs:
+  - {fileID: 5005861848988210125, guid: 16dace20d0f41704da3e913c8859c165, type: 3}
   enemyPrefab: {fileID: 8349942157368600015, guid: 6f2d77ce8af5d66498c187b0f3a170d9, type: 3}
 --- !u!4 &148134016
 Transform:

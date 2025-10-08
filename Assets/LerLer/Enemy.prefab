@@ -120,4 +120,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   maxHealth: 100
   baseDamage: 10
-  defaultSpeed: 2
+  moveDelay: 0.4
+  attackDelay: 1
+  gridSize: 1
+  wallCheckRadius: 0.4

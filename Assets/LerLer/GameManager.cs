@@ -1,3 +1,4 @@
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -8,104 +9,245 @@ public class GameManager : MonoBehaviour
     public int Health = 10;
     public int Waves = 0;
 
-    [Header("References")]
-    public Map map;                 
-    public Camera mainCamera;       
+    [Header("Wave Settings")]
+    public int totalWaves = 10;
+    public int baseEnemiesPerWave = 1;
+    public int enemyIncreasePerWave = 2;
+    public float timeBetweenEnemySpawns = 1f;
+    public float timeBetweenWaves = 5f;
 
-    [Header("Units")]
+    [Header("Enemy Scaling")]
+    public int wavesPerEnemyLevelUp = 5;
+    public float enemyHealthMultiplier = 1.5f;
+    public float enemyDamageMultiplier = 1.3f;
+
+    [Header("Income Settings")]
+    public int baseIncome = 50;
+    public float incomeMultiplier = 2f;
+
+    [Header("References")]
+    public Map map;
+    public Camera mainCamera;
+
+    [Header("Prefabs")]
     public GameObject[] wallPrefabs;
+    public GameObject[] unitPrefabs;
     public GameObject enemyPrefab;
 
     public Vector2 MouseLoc { get; private set; }
+
     private HashSet<Vector2> occupiedCells = new HashSet<Vector2>();
+    private List<Enemy> activeEnemies = new List<Enemy>();
+    private bool isGameOver = false;
 
     void Start()
     {
-        Wave(); 
+        StartCoroutine(GameLoop());
     }
 
     void Update()
     {
+        if (isGameOver) return;
+
         TrackMouse();
 
-        if (Input.GetMouseButtonDown(0))
+        if (Input.GetMouseButtonDown(0)) LeftClickAction();
+        if (Input.GetMouseButtonDown(1)) RightClickAction();
+    }
+
+    IEnumerator GameLoop()
+    {
+        while (Waves < totalWaves && !isGameOver)
         {
-            CellClicked(MouseLoc, 0);
+            yield return new WaitForSeconds(timeBetweenWaves);
+
+            if (!isGameOver)
+            {
+                yield return StartCoroutine(SpawnWave());
+                yield return new WaitUntil(() => AllEnemiesDefeated());
+
+                if (!isGameOver) GiveIncome();
+            }
         }
+
+        if (!isGameOver && Health > 0) Victory();
+    }
+
+    IEnumerator SpawnWave()
+    {
+        Waves++;
+        int enemiesToSpawn = baseEnemiesPerWave + (enemyIncreasePerWave * (Waves - 1));
+        int enemyLevel = 1 + (Waves - 1) / wavesPerEnemyLevelUp;
+
+        Debug.Log($"Wave {Waves}/{totalWaves} | Enemies: {enemiesToSpawn} | Enemy Level: {enemyLevel}");
+
+        for (int i = 0; i < enemiesToSpawn; i++)
+        {
+            if (isGameOver) break;
+            SpawnEnemy(map.EnemyBasePos, enemyLevel);
+            yield return new WaitForSeconds(timeBetweenEnemySpawns);
+        }
+    }
+
+    private bool AllEnemiesDefeated()
+    {
+        activeEnemies.RemoveAll(e => e == null);
+        return activeEnemies.Count == 0;
     }
 
     public void EnemyEntered(int damage)
     {
         Health -= damage;
-        if (Health <= 0)
-        {
-            Debug.Log("Game Over!");
-        }
+        Debug.Log($"Base hit! Health: {Health}");
+
+        if (Health <= 0 && !isGameOver) GameOver();
     }
 
-    public void CellClicked(Vector2 pos, int wallIndex)
+    public void EnemyDied(Enemy enemy)
     {
-        if (wallIndex < 0 || wallIndex >= wallPrefabs.Length) return;
-
-        GameObject prefab = wallPrefabs[wallIndex];
-        Wall wallData = prefab.GetComponent<Wall>();
-        if (wallData == null) return;
-
-        Vector2 snappedPos = map.GetPosition(pos);
-
-        if (!map.IsInsideMap(snappedPos))
-        {
-            Debug.Log("Invalid position: outside map!");
-            return;
-        }
-
-        if (snappedPos == map.MainBasePos || snappedPos == map.EnemyBasePos)
-        {
-            Debug.Log("Cannot place wall on base!");
-            return;
-        }
-
-        if (occupiedCells.Contains(snappedPos))
-        {
-            Debug.Log("Cell already occupied!");
-            CheckWall();
-            return;
-        }
-
-        if (Currency >= wallData.Cost)
-        {
-            GameObject unit = Instantiate(prefab, snappedPos, Quaternion.identity, map.transform);
-            unit.transform.localScale = new Vector3(map.cellSize, map.cellSize, 1);
-            Currency -= wallData.Cost;
-
-            occupiedCells.Add(snappedPos); // mark cell occupied
-        }
-        else
-        {
-            Debug.Log("Not enough currency!");
-        }
+        activeEnemies.Remove(enemy);
+        Debug.Log($"Enemy defeated! Remaining: {activeEnemies.Count}");
     }
-    void CheckWall()
+
+    private void GameOver()
     {
-        Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
+        isGameOver = true;
+        Debug.Log($"=== GAME OVER ===\nSurvived {Waves}/{totalWaves} waves");
+    }
+
+    private void Victory()
+    {
+        isGameOver = true;
+        Debug.Log($"=== VICTORY ===\nCompleted all {totalWaves} waves!\nHealth: {Health} | Currency: {Currency}");
+    }
+
+    void LeftClickAction()
+    {
+        Ray ray = mainCamera.ScreenPointToRay(Input.mousePosition);
         if (Physics.Raycast(ray, out RaycastHit hit))
         {
             Wall wall = hit.collider.GetComponentInParent<Wall>();
             if (wall != null)
             {
-                Debug.Log($"Clicked on wall: {wall.name}");
-                wall.Upgraded();
+                UpgradeWall(wall);
+                return;
+            }
+        }
+        PlaceWall(MouseLoc);
+    }
+
+    void RightClickAction()
+    {
+        Ray ray = mainCamera.ScreenPointToRay(Input.mousePosition);
+        if (Physics.Raycast(ray, out RaycastHit hit))
+        {
+            Unit unit = hit.collider.GetComponentInParent<Unit>();
+            if (unit != null)
+            {
+                UpgradeUnit(unit);
+                return;
+            }
+
+            Wall wall = hit.collider.GetComponentInParent<Wall>();
+            if (wall != null)
+            {
+                Unit existingUnit = wall.GetComponentInChildren<Unit>();
+                if (existingUnit != null)
+                    UpgradeUnit(existingUnit);
+                else
+                    PlaceUnitOnWall(wall);
             }
         }
     }
-    
-    public void SpawnEnemy(Vector2 position)
+
+    void PlaceWall(Vector2 pos)
     {
-        if (enemyPrefab == null)
+        if (wallPrefabs.Length == 0) return;
+
+        GameObject prefab = wallPrefabs[0];
+        Wall wallData = prefab.GetComponent<Wall>();
+        if (wallData == null) return;
+
+        Vector2 snappedPos = map.GetPosition(pos);
+
+        if (!map.IsInsideMap(snappedPos) ||
+            snappedPos == map.MainBasePos ||
+            snappedPos == map.EnemyBasePos ||
+            occupiedCells.Contains(snappedPos))
         {
-            Debug.LogWarning("Enemy prefab not assigned.");
+            Debug.Log("Cannot place wall here!");
             return;
         }
+
+        if (Currency >= wallData.Cost)
+        {
+            GameObject wall = Instantiate(prefab, snappedPos, Quaternion.identity, map.transform);
+            wall.transform.localScale = new Vector3(map.cellSize, map.cellSize, 1);
+            Currency -= wallData.Cost;
+            occupiedCells.Add(snappedPos);
+        }
+        else
+        {
+            Debug.Log($"Not enough currency! Need: {wallData.Cost}, Have: {Currency}");
+        }
+    }
+
+    void UpgradeWall(Wall wall)
+    {
+        if (Currency >= wall.UpgradeCost)
+        {
+            Currency -= wall.UpgradeCost;
+            wall.Upgraded();
+            Debug.Log($"Wall upgraded to Level {wall.Level}");
+        }
+        else
+        {
+            Debug.Log($"Not enough currency! Need: {wall.UpgradeCost}, Have: {Currency}");
+        }
+    }
+
+    void PlaceUnitOnWall(Wall wall)
+    {
+        if (unitPrefabs.Length == 0)
+        {
+            Debug.LogWarning("No unit prefabs assigned!");
+            return;
+        }
+
+        GameObject unitPrefab = unitPrefabs[0];
+        Unit unitData = unitPrefab.GetComponent<Unit>();
+        if (unitData == null) return;
+
+        if (Currency >= unitData.PlacePrice)
+        {
+            GameObject unitObj = Instantiate(unitPrefab, wall.transform.position, Quaternion.identity, wall.transform);
+            unitObj.transform.localScale = Vector3.one;
+            Currency -= unitData.PlacePrice;
+            Debug.Log($"Unit placed on wall. Cost: {unitData.PlacePrice}");
+        }
+        else
+        {
+            Debug.Log($"Not enough currency! Need: {unitData.PlacePrice}, Have: {Currency}");
+        }
+    }
+
+    void UpgradeUnit(Unit unit)
+    {
+        if (Currency >= unit.Price)
+        {
+            Currency -= unit.Price;
+            unit.Upgrade();
+            Debug.Log($"Unit upgraded to Level {unit.Level}");
+        }
+        else
+        {
+            Debug.Log($"Not enough currency! Need: {unit.Price}, Have: {Currency}");
+        }
+    }
+
+    void SpawnEnemy(Vector2 position, int level)
+    {
+        if (enemyPrefab == null) return;
 
         GameObject enemyObj = Instantiate(enemyPrefab, position, Quaternion.identity, transform);
         enemyObj.transform.localScale = new Vector3(map.cellSize, map.cellSize, 1);
@@ -114,20 +256,17 @@ public class GameManager : MonoBehaviour
         if (enemy != null)
         {
             enemy.MoveSpeed = 2f;
-            enemy.Damage = 10;
+            enemy.Damage = Mathf.RoundToInt(1 * Mathf.Pow(enemyDamageMultiplier, level - 1));
+            enemy.Health = Mathf.RoundToInt(enemy.Health * Mathf.Pow(enemyHealthMultiplier, level - 1));
+            activeEnemies.Add(enemy);
         }
     }
 
-    public void Wave()
+    private void GiveIncome()
     {
-        Waves++;
-        Debug.Log("Starting wave: " + Waves);
-        SpawnEnemy(map.EnemyBasePos);
-    }
-
-    private void Paycheck(int income)
-    {
+        int income = Mathf.RoundToInt(baseIncome * Mathf.Pow(incomeMultiplier, Waves - 1));
         Currency += income;
+        Debug.Log($"Wave complete! +{income} currency. Total: {Currency}");
     }
 
     private void TrackMouse()

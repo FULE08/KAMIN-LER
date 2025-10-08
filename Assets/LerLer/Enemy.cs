@@ -3,7 +3,7 @@ using System.Collections;
 
 public class Enemy : MonoBehaviour
 {
-    public int Health { get; private set; }
+    public int Health { get; set; }
     public int Damage { get; set; }
     public float MoveSpeed { get; set; }
     public int Level { get; private set; }
@@ -19,6 +19,7 @@ public class Enemy : MonoBehaviour
     private float moveTimer;
     private float attackTimer;
     private bool isAttacking;
+    private bool isMoving;
     private Vector3 targetPos;
     private Transform mainBaseTransform;
 
@@ -36,7 +37,8 @@ public class Enemy : MonoBehaviour
         if (mainBase != null)
             mainBaseTransform = mainBase.transform;
 
-        targetPos = SnapToGrid(transform.position);
+        targetPos = GetCellCenter(transform.position);
+        transform.position = targetPos;
     }
 
     private void Update()
@@ -44,27 +46,13 @@ public class Enemy : MonoBehaviour
         moveTimer += Time.deltaTime;
         attackTimer += Time.deltaTime;
 
-        if (isAttacking)
+        if (isAttacking || isMoving)
             return;
 
-        // Move every "moveDelay" seconds
         if (moveTimer >= moveDelay)
         {
             MoveOneStep();
             moveTimer = 0f;
-        }
-
-        transform.position = Vector3.MoveTowards(
-            transform.position,
-            targetPos,
-            MoveSpeed * Time.deltaTime
-        );
-
-        Vector3 dir = targetPos - transform.position;
-        if (dir.sqrMagnitude > 0.01f)
-        {
-            float angle = Mathf.Atan2(dir.y, dir.x) * Mathf.Rad2Deg;
-            transform.rotation = Quaternion.Euler(0, 0, angle - 90f);
         }
     }
 
@@ -73,12 +61,8 @@ public class Enemy : MonoBehaviour
         if (mainBaseTransform == null)
             return;
 
-        Vector3 current = SnapToGrid(transform.position);
-        Vector3 target = SnapToGrid(new Vector3(
-            mainBaseTransform.position.x,
-            mainBaseTransform.position.y,
-            transform.position.z
-        ));
+        Vector3 current = GetCellCenter(transform.position);
+        Vector3 target = GetCellCenter(mainBaseTransform.position);
 
         if (Vector3.Distance(current, target) < 0.1f)
             return;
@@ -114,9 +98,29 @@ public class Enemy : MonoBehaviour
             if (CheckForWall(bestMove))
                 return;
 
-            targetPos = bestMove;
+            targetPos = GetCellCenter(bestMove);
             targetPos.z = transform.position.z;
+
+            StartCoroutine(MoveToCell(targetPos));
         }
+    }
+
+    private IEnumerator MoveToCell(Vector3 destination)
+    {
+        isMoving = true;
+
+        while ((transform.position - destination).sqrMagnitude > 0.0001f)
+        {
+            transform.position = Vector3.MoveTowards(
+                transform.position,
+                destination,
+                MoveSpeed * Time.deltaTime
+            );
+            yield return null;
+        }
+
+        transform.position = GetCellCenter(destination);
+        isMoving = false;
     }
 
     private bool CheckForWall(Vector3 nextPos)
@@ -168,13 +172,11 @@ public class Enemy : MonoBehaviour
         isAttacking = false;
     }
 
-    private Vector3 SnapToGrid(Vector3 pos)
+    private Vector3 GetCellCenter(Vector3 pos)
     {
-        return new Vector3(
-            Mathf.Round(pos.x / gridSize) * gridSize,
-            Mathf.Round(pos.y / gridSize) * gridSize,
-            pos.z
-        );
+        float x = Mathf.Floor(pos.x / gridSize) * gridSize + gridSize / 2f;
+        float y = Mathf.Floor(pos.y / gridSize) * gridSize + gridSize / 2f;
+        return new Vector3(x, y, pos.z);
     }
 
     public void OnDamaged(int damage)
@@ -182,5 +184,13 @@ public class Enemy : MonoBehaviour
         Health -= damage;
         if (Health <= 0)
             Destroy(gameObject);
+    }
+    void OnDestroy()
+    {
+        GameManager gm = FindObjectOfType<GameManager>();
+        if (gm != null)
+        {
+            gm.EnemyDied(this);
+        }
     }
 }
