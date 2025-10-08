@@ -2,11 +2,11 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class Switch : Wall
+public class Laser : Wall
 {
     void Start()
     {
-        Health = 1000;
+        Health = 750;
         Level = 5;
         UpdateLabel();
     }

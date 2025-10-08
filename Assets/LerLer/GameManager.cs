@@ -30,7 +30,7 @@ public class GameManager : MonoBehaviour
 
         if (Input.GetMouseButtonDown(0))
         {
-            PlaceWall(MouseLoc, 0);
+            CellClicked(MouseLoc, 0);
         }
     }
 
@@ -43,7 +43,7 @@ public class GameManager : MonoBehaviour
         }
     }
 
-    public void PlaceWall(Vector2 pos, int wallIndex)
+    public void CellClicked(Vector2 pos, int wallIndex)
     {
         if (wallIndex < 0 || wallIndex >= wallPrefabs.Length) return;
 
@@ -68,6 +68,7 @@ public class GameManager : MonoBehaviour
         if (occupiedCells.Contains(snappedPos))
         {
             Debug.Log("Cell already occupied!");
+            CheckWall();
             return;
         }
 
@@ -84,8 +85,20 @@ public class GameManager : MonoBehaviour
             Debug.Log("Not enough currency!");
         }
     }
-
-
+    void CheckWall()
+    {
+        Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
+        if (Physics.Raycast(ray, out RaycastHit hit))
+        {
+            Wall wall = hit.collider.GetComponentInParent<Wall>();
+            if (wall != null)
+            {
+                Debug.Log($"Clicked on wall: {wall.name}");
+                wall.Upgraded();
+            }
+        }
+    }
+    
     public void SpawnEnemy(Vector2 position)
     {
         if (enemyPrefab == null)

@@ -2,12 +2,12 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class Switch : Wall
+public class MaxWall : Wall
 {
     void Start()
     {
-        Health = 1000;
-        Level = 5;
+        Level = 6;
+        Health = 2500;
         UpdateLabel();
     }
 }
