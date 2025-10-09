@@ -6,7 +6,7 @@ public class Laser : Wall
 {
     void Start()
     {
-        Health = 750;
+        Health = 125;
         Level = 5;
         UpdateLabel();
     }

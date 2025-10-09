@@ -98,6 +98,6 @@ public class Unit : MonoBehaviour
         Damage += 5;
         Health += 20;
         if (Level == 2) Pattern = AttackPattern.Cross;
-        else if (Level == 3) Pattern = AttackPattern.Diagonal;
+        else if (Level >= 3) Pattern = AttackPattern.Diagonal;
     }
 }

@@ -8,7 +8,7 @@ public class Disguise : Wall
 {
     void Start()
     {
-        Health = 2500;
+        Health = 325;
         Level = 4;
         MaxLevel = 1;
         UpdateLabel();
@@ -19,7 +19,7 @@ public class Disguise : Wall
         {
             gamemanager.Currency -= UpgradeCost;
             Level--;
-            Health += 500;
+            Health += 50;
             UpgradeCost *= 2;
             Debug.Log($"The {gameObject.name} has been upgraded, Its level is now {Level}");
         }

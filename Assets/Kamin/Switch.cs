@@ -6,7 +6,7 @@ public class Switch : Wall
 {
     void Start()
     {
-        Health = 1000;
+        Health = 250;
         Level = 5;
         UpdateLabel();
     }

@@ -9,8 +9,8 @@ public class Wall : MonoBehaviour
     public int Cost = 20;
 
     public int UpgradeCost = 25;
-    protected int Health = 50;
-    protected int MaxLevel = 5;
+    protected int Health = 10;
+    public int MaxLevel = 5;
     public int Level = 1;
 
     public int CurrentHealth => Health;
@@ -32,23 +32,10 @@ public class Wall : MonoBehaviour
 
     public virtual void Upgraded()
     {
-        if (gamemanager.Currency >= UpgradeCost && Level < MaxLevel)
-        {
-            gamemanager.Currency -= UpgradeCost;
-            Level++;
-            Health *= 2;
-            UpgradeCost *= 2;
-            Debug.Log($"The {gameObject.name} has been upgraded, Its level is now {Level}");
-        }
-        else if (Level >= MaxLevel)
-        {
-            Debug.Log("Max Level");
-        }
-        else
-        {
-            int needMore = UpgradeCost - gamemanager.Currency;
-            Debug.Log($"Need {needMore}$ more");
-        }
+        gamemanager.Currency -= UpgradeCost;
+        Level++;
+        Health += Health/2;
+        UpgradeCost += 50;
     }
 
     void Update()

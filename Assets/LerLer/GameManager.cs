@@ -194,7 +194,7 @@ public class GameManager : MonoBehaviour
 
     void UpgradeWall(Wall wall)
     {
-        if (Currency >= wall.UpgradeCost)
+        if (Currency >= wall.UpgradeCost && wall.Level < wall.MaxLevel)
         {
             Currency -= wall.UpgradeCost;
             wall.Upgraded();

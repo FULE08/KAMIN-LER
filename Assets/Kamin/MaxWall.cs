@@ -7,7 +7,7 @@ public class MaxWall : Wall
     void Start()
     {
         Level = 6;
-        Health = 2500;
+        Health = 300;
         UpdateLabel();
     }
 }
