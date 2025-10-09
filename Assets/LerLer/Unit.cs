@@ -1,5 +1,6 @@
 using UnityEngine;
 using System.Collections.Generic;
+
 public enum AttackPattern { Circle, Cross, Diagonal }
 
 public class Unit : MonoBehaviour
@@ -36,7 +37,10 @@ public class Unit : MonoBehaviour
         if (enemies.Count > 0 && attackCooldown <= 0f)
         {
             foreach (var enemy in enemies)
+            {
                 Attack(enemy);
+                DrawAttackLine(enemy);
+            }
 
             attackCooldown = Rate;
         }
@@ -59,8 +63,6 @@ public class Unit : MonoBehaviour
 
     private bool IsEnemyInPattern(Vector2 enemyPos, float dist)
     {
-        Vector2 dir = (enemyPos - Position).normalized;
-
         switch (Pattern)
         {
             case AttackPattern.Circle:
@@ -83,6 +85,12 @@ public class Unit : MonoBehaviour
     {
         if (enemy != null)
             enemy.OnDamaged(Damage);
+    }
+
+    private void DrawAttackLine(Enemy enemy)
+    {
+        if (enemy == null) return;
+        Debug.DrawLine(transform.position, enemy.transform.position, Color.red, 1f);
     }
 
     public void OnDamaged(int damage)
